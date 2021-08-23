@@ -327,8 +327,7 @@ class COCO:
 
             progress_length = len(json_data["annotations"])
             progress_cnt = 0
-            printProgressBar(0, progress_length, prefix='\nCOCO Parsing:'.ljust(
-                15), suffix='Complete', length=40)
+            printProgressBar(0, progress_length, prefix='\nCOCO Parsing:'.ljust(15), suffix='Complete', length=40)
 
             for anno in json_data["annotations"]:
 
@@ -342,23 +341,38 @@ class COCO:
 
                 for info in images_info:
                     if info["id"] == image_id:
-                        filename, img_width, img_height = \
-                            info["file_name"].split(
-                                ".")[0], info["width"], info["height"]
+                        filename = info["file_name"].split(".")[0]
+                        img_width = info["width"]
+                        img_height = info["height"]
 
                         if img_width == 0 or img_height == 0:
-                            img = Image.open(os.path.join(
-                                img_path, info["file_name"]))
+                            img = Image.open(os.path.join(img_path, info["file_name"]))
                             img_width = str(img.size[0])
                             img_height = str(img.size[1])
+                        break
+                else:
+                    print("-- Ignore : ", image_id, "-----")
+                    printProgressBar(progress_cnt + 1, progress_length, prefix='COCO Parsing:'.ljust(15), suffix='Complete', length=40)
+                    progress_cnt += 1
+                    continue
 
                 for category in cls_info:
                     if category["id"] == cls_id:
                         cls = category["name"]
+                        if cls == None:
+                            print(anno)
+                            print(category, "\n")
+                            assert False
+
                         cls_parent = category['supercategory'] if 'supercategory' in category else None
 
                         if cls not in cls_hierarchy:
-                            cls_hierarchy[cls] = cls_parent
+                            cls_hierarchy[cls_parent] = cls
+                        break
+                else:
+                    print(anno)
+                    print(cls_id, "\n")
+                    assert False
 
                 size = {
                     "width": img_width,
@@ -410,7 +424,7 @@ class COCO:
             msg = "ERROR : {}, moreInfo : {}\t{}\t{}".format(
                 e, exc_type, fname, exc_tb.tb_lineno)
 
-            return False, msg
+            return False, msg, {}
 
 
 class UDACITY:
@@ -727,8 +741,7 @@ class YOLO:
 
             progress_length = len(data)
             progress_cnt = 0
-            printProgressBar(0, progress_length, prefix='\nYOLO Generating:'.ljust(
-                15), suffix='Complete', length=40)
+            printProgressBar(0, progress_length, prefix='\nYOLO Generating:'.ljust(15), suffix='Complete', length=40)
 
             result = {}
 
@@ -749,6 +762,12 @@ class YOLO:
                     bb = self.coordinateCvt2YOLO((img_width, img_height), b)
 
                     cls_name = data[key]["objects"][str(idx)]["name"]
+                    try:
+                        cls_name = cls_name#.replace(" ", "_")
+                    except:
+                        print(data[key]["objects"][str(idx)])
+                        assert False
+                    #print(cls_name)
 
                     def get_class_index(cls_list, cls_hierarchy, cls_name):
                         if cls_name in cls_list:
@@ -756,7 +775,10 @@ class YOLO:
 
                         if type(cls_hierarchy) is dict and cls_name in cls_hierarchy:
                             return get_class_index(cls_list, cls_hierarchy, cls_hierarchy[cls_name])
-
+                        print("\n", cls_hierarchy)
+                        print(cls_name)
+                        print(cls_list)
+                        assert False
                         return None
 
                     cls_id = get_class_index(

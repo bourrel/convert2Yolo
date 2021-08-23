@@ -54,17 +54,14 @@ def main(config):
     elif config["datasets"] == "COCO":
         coco = COCO()
 
-        flag, data, cls_hierarchy = coco.parse(
-            config["label"], config["img_path"])
-        yolo = YOLO(os.path.abspath(
-            config["cls_list"]), cls_hierarchy=cls_hierarchy)
+        flag, data, cls_hierarchy = coco.parse(config["label"], config["img_path"])
+        yolo = YOLO(os.path.abspath(config["cls_list"]), cls_hierarchy=cls_hierarchy)
 
         if flag == True:
             flag, data = yolo.generate(data)
 
             if flag == True:
-                flag, data = yolo.save(data, config["output_path"], config["img_path"],
-                                       config["img_type"], config["manifest_path"])
+                flag, data = yolo.save(data, config["output_path"], config["img_path"], config["img_type"], config["manifest_path"])
 
                 if flag == False:
                     print("Saving Result : {}, msg : {}".format(flag, data))
